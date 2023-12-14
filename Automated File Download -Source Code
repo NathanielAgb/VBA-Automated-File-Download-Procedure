@@ -1,0 +1,110 @@
+‘Starting Procedure
+Option Explicit
+Dim ch As selenium.ChromeDriver
+
+
+Sub webtest()
+    Dim FINDBY As New selenium.By
+
+    
+    Set ch = New selenium.ChromeDriver
+'    ch.Timeouts.ImplicitWait = 50000
+        ‘Go to URL through Automated experience (Web scraping)
+
+    ch.Start baseUrl:="https://www.faadamt.com"
+    
+    ch.Get "/"
+    
+     ch.Window.Maximize
+    
+'Log into the website
+
+    
+    ch.FindElementByClass("tuft").SendKeys "Staff"
+    
+    ch.FindElementByClass("tuft2").SendKeys "****"
+    
+    ch.FindElementByClass("loginbt").Click
+            
+  ‘ By-passing the webpage Continuous Load time.
+   Dim tabl As selenium.WebElement
+ Dim search As selenium.WebElement
+    'Set search = ch.FindElementByCss("body > div:nth-child(2) > div > form > input[type=submit]")
+
+          On Error Resume Next
+Do While ch.FindElementByCss("body > div:nth-child(2) > div > form > input[type=submit]") Is Nothing
+    DoEvents
+Loop
+On Error GoTo 0
+Set tabl = ch.FindElementByTag("table")
+ThisWorkbook.Worksheets(1).Range("B1").CurrentRegion.Borders.Value = 1
+End Sub
+‘Looping through each Table row item on the website, copying it back into excel
+Sub proc(process As selenium.WebElement)
+
+    Dim AllRows As selenium.WebElements
+    Dim SingleRow As selenium.WebElement
+    Dim AllRowCells As selenium.WebElements
+    Dim singlecell As selenium.WebElement
+    Dim outputsheet As Worksheet
+    Dim rownum As Long, colnum As Long
+    Dim targetcell As Range
+    Dim videol As selenium.WebElements
+    Set outputsheet = ThisWorkbook.Worksheets.Add
+    
+    
+    
+    Set AllRows = process.FindElementsByTag("tr")
+    
+    For Each SingleRow In AllRows
+    rownum = rownum + 1
+       Set AllRowCells = SingleRow.FindElementsByTag("td")
+        
+        If AllRowCells.Count = 0 Then
+            Set AllRowCells = SingleRow.FindElementsByTag("th")
+            End If
+        For Each singlecell In AllRowCells
+        'For Each singlecell In AllRows
+            colnum = colnum + 1
+            Set targetcell = outputsheet.Cells(rownum, colnum)
+            targetcell.Value = singlecell.Text
+            Set videol = singlecell.FindElementsByTag("a")
+        If videol.Count > 0 Then
+
+         targetcell.Hyperlinks.Add targetcell, videol(1).Attribute("href")
+
+            End If
+
+            Next singlecell
+             colnum = 0
+    Next SingleRow
+   
+    
+End Sub
+‘Start the download process when given specific links to download.
+Option Explicit
+'#If VBA7 Then
+Private Declare PtrSafe Function URLdownloadtofile Lib "Urlmon" Alias "urldownloadtofileA" ( _
+ByVal pcaller As LongPtr, ByVal szURL As String, _
+ByVal szfilename As String, _
+ByVal dwreserved As LongPtr, _
+ByVal lpfncb As LongPtr) As LongPtr
+'#Else
+'Private Declare Function URLdownloadtofile Lib "urlmon" Alias "urldownloadtofileA" ( _
+'ByVal pcaller As Long, ByVal szURL As String, _
+'ByVal szfilename As String, _
+'ByVal dwreserved As Long, _
+'ByVal lpfncb As Long) As Long
+'#End If
+
+Sub downloadfile()
+Dim fileurl As String
+Dim destinationfile As String
+'Dim ch As selenium.WebElement
+'ch.FindElementByCss ("#download-edited")
+ fileurl = "https://www.faadamt.com/attachm/553edcddd69020ed84d7ec8371462c85/1.pdf"
+destinationfile = "C:\VBA\VBA Download.zip"
+ 
+ URLdownloadtofile 0, fileurl, destinationfile, 0, 0
+
+End Sub
